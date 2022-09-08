@@ -67,15 +67,17 @@ class PlayScene : Scene() {
     private lateinit var playerView: View
     private val player: Player = Player("Player69", 1)
     private val characterNames = listOf("trader", "hunter", "forester", "flowerist")
-    private lateinit var textures: Map<String, Bitmap>
+    //private lateinit var textures: Map<String, Bitmap>
     private var playerInventory = Inventory()
     private val traders = mutableListOf<Trader>()
     private var loadedPosition: Point? = null
+    private val viewsManager = ViewsManager()
 
     override suspend fun SContainer.sceneInit() {
         tileMap = resourcesVfs["maps/village.tmx"].readTiledMap()
 
-        val list = mutableMapOf<String, Bitmap>()
+        Textures.load()
+        /*val list = mutableMapOf<String, Bitmap>()
         list["stick"] = resourcesVfs["textures/stick.png"].readBitmap()
         list["log"] = resourcesVfs["textures/log.png"].readBitmap()
         list["flower"] = resourcesVfs["textures/flower.png"].readBitmap()
@@ -102,7 +104,7 @@ class PlayScene : Scene() {
         list["dragon sword"] = resourcesVfs["textures/dragon sword.png"].readBitmap()
 
         list["health"] = resourcesVfs["textures/health.png"].readBitmap()
-        textures = list
+        textures = list*/
 
         val file = rootLocalVfs["player.json"]
         if (file.exists()) {
@@ -129,7 +131,7 @@ class PlayScene : Scene() {
                 val charactersLayer = tileMapView["characters"].first as Container
                 val spawn = tileMapView.tiledMap.data.getObjectByName("spawn")
 
-                val playerTexture = textures["player"]
+                val playerTexture = Textures["player"]
                 playerView = if (playerTexture != null) {
                     charactersLayer.image(playerTexture)
                         .anchor(0.5, 1.0)
@@ -149,10 +151,13 @@ class PlayScene : Scene() {
                     playerInventory
                 )
 
-                playerView.onCollision({ InventoryItem.itemByName(it.name ?: "") != null }) { v ->
-                    v.removeFromParent()
+                playerView.onCollision({ viewsManager.isItemActive(it) }) { v ->
+                    val item = viewsManager.findItemByView(v)
+                    item?.let { ite ->
+                        playerInventory.addItem(ite)
+                        viewsManager.removeItem(ite)
+                    }
 
-                    InventoryItem.itemByName(v.name ?: "")?.let { ite -> playerInventory.addItem(ite) }
                     tileMapView.tiledMap.data.getObjectsWithFilter("inventory") {
                         it.properties["zone"]?.string == "item" && it.properties["item"]?.string == v.name
                     }?.firstOrNull()?.minusCount()
@@ -188,7 +193,7 @@ class PlayScene : Scene() {
                 }
 
                 characterNames.forEach { charName ->
-                    textures[charName]?.let { charImage ->
+                    Textures[charName]?.let { charImage ->
                         val charSpawn = tileMapView.tiledMap.data.getObjectByName(charName)
                         charactersLayer.image(charImage)
                             .anchor(0.5, 1.0)
@@ -199,7 +204,7 @@ class PlayScene : Scene() {
                     }
                 }
 
-                stage?.addSpawners(tileMapView, charactersLayer, textures, player, playerView)
+                stage?.addSpawners(tileMapView, charactersLayer, player, playerView, viewsManager)
 
                 charactersLayer.keepChildrenSortedByY()
             }
@@ -237,7 +242,7 @@ class PlayScene : Scene() {
             addFixedUpdater(20.timesPerSecond) {
                 itemsContainer.removeChildren()
 
-                textures[playerInventory.weapon.name]?.let { img ->
+                Textures[playerInventory.weapon.name]?.let { img ->
                     itemsContainer.imageTextRow(
                         img,
                         "${playerInventory.weapon.name}: damage: ${playerInventory.weapon.damage}",
@@ -245,7 +250,7 @@ class PlayScene : Scene() {
                 }
 
                 playerInventory.items.forEach { item ->
-                    textures[item.name]?.let { img ->
+                    Textures[item.name]?.let { img ->
                         val newItemText = itemsContainer.imageTextRow(img, "${item.name}: ${item.count}")
 
                         previous?.let { pre ->

@@ -1,5 +1,6 @@
 package mobs
 
+import com.soywiz.korge.view.*
 import inventory.*
 import inventory.simpleItems.*
 import inventory.weapons.*
@@ -12,6 +13,7 @@ interface Mob {
     var health: Int
     var maxHealth: Int
     var attackTimer: Int
+    var view: View?
 
     fun attack(mob: Mob): Boolean {
         return if (attackTimer <= 0) {
@@ -33,11 +35,11 @@ interface Mob {
     }
 
     companion object {
-        fun mobByName(name: String): Mob? {
+        fun mobByName(name: String, view: View? = null): Mob? {
             return when (name.lowercase()) {
-                "zombie" -> Zombie()
-                "skeleton" -> Skeleton()
-                "wolf" -> Wolf()
+                "zombie" -> Zombie(view = view)
+                "skeleton" -> Skeleton(view = view)
+                "wolf" -> Wolf(view = view)
                 else -> null
             }
         }

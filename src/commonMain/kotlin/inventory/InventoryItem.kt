@@ -1,5 +1,6 @@
 package inventory
 
+import com.soywiz.korge.view.*
 import inventory.simpleItems.*
 import inventory.weapons.*
 import kotlinx.serialization.*
@@ -9,6 +10,7 @@ interface InventoryItem {
     val name: String
     var count: Int
     val priceForOne: Float
+    var view: View?
 
     fun plus(count: Int = 1) {
         this.count += count
@@ -23,21 +25,21 @@ interface InventoryItem {
     }
 
     companion object {
-        fun itemByName(name: String): InventoryItem? {
+        fun itemByName(name: String, view: View? = null): InventoryItem? {
             return when (name.lowercase()) {
-                "stick" -> Stick()
-                "log" -> Log()
-                "flower" -> Flower()
-                "cactus" -> Cactus()
-                "bone" -> Bone()
-                "zombie meat" -> ZombieMeat()
-                "wolf skin" -> WolfSkin()
-                "nothing" -> NoWeapon()
-                "wooden sword" -> WoodenSword()
-                "stone sword" -> StoneSword()
-                "iron sword" -> IronSword()
-                "legendary sword" -> LegendarySword()
-                "dragon sword" -> DragonSword()
+                "stick" -> Stick(view = view)
+                "log" -> Log(view = view)
+                "flower" -> Flower(view = view)
+                "cactus" -> Cactus(view = view)
+                "bone" -> Bone(view = view)
+                "zombie meat" -> ZombieMeat(view = view)
+                "wolf skin" -> WolfSkin(view = view)
+                "nothing" -> NoWeapon(view = view)
+                "wooden sword" -> WoodenSword(view = view)
+                "stone sword" -> StoneSword(view = view)
+                "iron sword" -> IronSword(view = view)
+                "legendary sword" -> LegendarySword(view = view)
+                "dragon sword" -> DragonSword(view = view)
                 else -> null
             }
         }

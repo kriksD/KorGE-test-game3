@@ -68,8 +68,8 @@ fun Stage.addMobAI(
     mob: Mob,
     playerMob: Player,
     itemLayer: Container,
-    textures: Map<String, Bitmap>,
     mobObject: TiledMap.Object?,
+    viewsManager: ViewsManager,
 ) {
     var isDead = false
     val updater = addUpdater { dt ->
@@ -91,11 +91,16 @@ fun Stage.addMobAI(
 
     addUpdater {
         if (isDead) {
-            textures[mob.dropItem.name]?.let {
+            /*Textures[mob.dropItem.name]?.let {
                 itemLayer.image(it, 0.5, 0.5).position(char.pos).name(mob.dropItem.name)
+            }*/
+
+            viewsManager.getNewItem(mob.dropItem.name)?.view?.let {
+                it.position(char.pos)
+                itemLayer.addChild(it)
             }
 
-            char.removeFromParent()
+            viewsManager.removeMob(mob)
             mobObject?.minusCount()
             updater.cancel()
             isDead = false
@@ -106,9 +111,9 @@ fun Stage.addMobAI(
 fun Stage.addSpawners(
     tileMapView: TiledMapView,
     charactersLayer: Container,
-    textures: Map<String, Bitmap>,
     playerMob: Player,
     playerView: View,
+    viewsManager: ViewsManager,
 ) {
     addFixedUpdater(5.seconds) {
         tileMapView.tiledMap.data.getZones("item")?.forEach { obj ->
@@ -120,10 +125,13 @@ fun Stage.addSpawners(
                     val pos = obj.bounds.getRandomPosition()
 
                     val itemsLayer = tileMapView["inventory"].first as Container
-                    textures[name]?.let {
-                        itemsLayer.image(it, 0.5, 0.5).position(pos).name(name)
+                    name?.let { n ->
+                        viewsManager.getNewItem(n)?.view?.let {
+                            it.position(pos)
+                            itemsLayer.addChild(it)
 
-                        obj.plusCount()
+                            obj.plusCount()
+                        }
                     }
                 }
             }
@@ -139,14 +147,12 @@ fun Stage.addSpawners(
                 name?.let { mobName ->
                     if (mobCount.int < 5) {
                         val pos = obj.bounds.getRandomPosition()
-                        val mob = Mob.mobByName(mobName)
+                        val mob = viewsManager.getNewMob(mobName)
 
                         mob?.let { m ->
-                            textures[mobName]?.let { charImage ->
-                                val mobView = charactersLayer.image(charImage)
-                                    .anchor(0.5, 1.0)
-                                    .position(pos)
-                                    .name(mobName)
+                            m.view?.let { mobView ->
+                                mobView.position(pos)
+                                charactersLayer.addChild(mobView)
 
                                 addMobAI(
                                     mobView,
@@ -155,8 +161,8 @@ fun Stage.addSpawners(
                                     m,
                                     playerMob,
                                     tileMapView["inventory"].first as Container,
-                                    textures,
-                                    obj
+                                    obj,
+                                    viewsManager,
                                 )
 
                                 addHPBar(mobView, m, tileMapView["inventory"].first as Container)

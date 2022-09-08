@@ -1,10 +1,14 @@
 package mobs
 
+import com.soywiz.korge.view.*
 import inventory.*
 import inventory.simpleItems.*
 import offers.*
 
-class Trader(override val name: String) : Mob {
+class Trader(
+    override val name: String,
+    override var view: View? = null,
+) : Mob {
     override val dropItem: InventoryItem = Stick(0)
     override var damage: Int = 0
     override var health: Int = 10
